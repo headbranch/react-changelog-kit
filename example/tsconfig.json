@@ -1,0 +1,27 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "paths": {
+      "react-changelog-kit": [
+        "../src/index.ts"
+      ],
+      "react-changelog-kit/*": [
+        "../src/*"
+      ],
+      "@react-native-async-storage/async-storage": [
+        "./node_modules/@react-native-async-storage/async-storage"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "../src/__tests__"
+  ]
+}

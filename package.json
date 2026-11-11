@@ -1,0 +1,69 @@
+{
+  "name": "react-changelog-kit",
+  "version": "0.1.0",
+  "description": "Headless changelog seen-tracking for React Native and Expo: badges, popups and NEW tags that never show twice.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/headbranch/react-changelog-kit.git"
+  },
+  "homepage": "https://github.com/headbranch/react-changelog-kit#readme",
+  "bugs": {
+    "url": "https://github.com/headbranch/react-changelog-kit/issues"
+  },
+  "sideEffects": false,
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/index.d.ts",
+  "source": "./src/index.ts",
+  "react-native": "./lib/module/index.js",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./lib/typescript/index.d.ts",
+      "import": "./lib/module/index.js",
+      "require": "./lib/commonjs/index.js",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/__tests__"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "example": "npm --prefix example run",
+    "prepare": "npm run build",
+    "release": "release-it",
+    "release:pre": "release-it --preRelease=beta",
+    "release:dry": "release-it --dry-run"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "~19.3.0",
+    "jsdom": "^31.0.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "release-it": "^21.1.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "keywords": [
+    "react-native",
+    "react",
+    "web",
+    "expo",
+    "changelog",
+    "whats-new",
+    "badge",
+    "onboarding"
+  ]
+}
