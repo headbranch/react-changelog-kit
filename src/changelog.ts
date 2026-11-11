@@ -14,6 +14,18 @@ import type {
 type SeenValue = true | string[];
 type SeenMap = Record<string, SeenValue>;
 
+/**
+ * Seen maps are keyed by entry ID, so they have no prototype: a plain `{}` would make IDs like
+ * `toString`, `constructor` or `__proto__` read or write built-in properties instead of seen state.
+ */
+function emptySeen(): SeenMap {
+  return Object.create(null) as SeenMap;
+}
+
+function copySeen(seen: Readonly<SeenMap>): SeenMap {
+  return Object.assign(emptySeen(), seen);
+}
+
 interface StoredState {
   schema: 1;
   seen: SeenMap;
@@ -60,7 +72,7 @@ function parseStored(raw: string | null | undefined): StoredState | null {
   try {
     const parsed = JSON.parse(raw) as Partial<StoredState> | null;
     if (!parsed || typeof parsed !== 'object' || parsed.schema !== SCHEMA) return null;
-    const seen: SeenMap = {};
+    const seen = emptySeen();
     if (parsed.seen && typeof parsed.seen === 'object') {
       for (const [id, value] of Object.entries(parsed.seen)) {
         if (value === true) seen[id] = true;
@@ -98,7 +110,7 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
   // Store
   // ---------------------------------------------------------------------------
 
-  let snapshot: Snapshot = { ready: false, namespace: null, seen: {} };
+  let snapshot: Snapshot = { ready: false, namespace: null, seen: emptySeen() };
   const listeners = new Set<() => void>();
   let loadToken = 0;
   let pending: PendingOp[] = [];
@@ -123,7 +135,7 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
 
   /** Drops state for IDs no longer in `entries` and channels no longer on an entry. */
   function prune(seen: Readonly<SeenMap>): SeenMap {
-    const out: SeenMap = {};
+    const out = emptySeen();
     for (const [id, value] of Object.entries(seen)) {
       const entry = byId.get(id);
       if (!entry) continue;
@@ -167,12 +179,12 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
       const current = (next ?? seen)[id];
       if (channel === undefined) {
         if (current === true) continue;
-        next ??= { ...seen };
+        next ??= copySeen(seen);
         next[id] = true;
       } else {
         if (!entry.channels?.includes(channel)) continue;
         if (current === true || current?.includes(channel)) continue;
-        next ??= { ...seen };
+        next ??= copySeen(seen);
         next[id] = current ? [...current, channel] : [channel];
       }
     }
@@ -196,7 +208,7 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
   }
 
   function firstLaunchSeen(value: InitialSeen): SeenMap {
-    const seen: SeenMap = {};
+    const seen = emptySeen();
     const ids = value === 'all' ? configs.map((e) => e.id) : value === 'none' ? [] : value;
     for (const id of ids) if (byId.has(id)) seen[id] = true;
     return seen;
@@ -321,7 +333,7 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
   function setNamespace(namespace: string | null): void {
     if (namespace === snapshot.namespace) return;
     pending = [];
-    emit({ ready: false, namespace, seen: {} });
+    emit({ ready: false, namespace, seen: emptySeen() });
     load(namespace);
   }
 
@@ -330,7 +342,7 @@ export function createChangelog<const E extends readonly EntryConfig[]>(
     const key = storageKey(namespace);
     pending = [];
     loadToken++; // cancel any in-flight load
-    emit({ ready: false, namespace, seen: {} });
+    emit({ ready: false, namespace, seen: emptySeen() });
     await writeChain;
     unflushed.delete(key);
     try {

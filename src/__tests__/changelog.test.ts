@@ -217,6 +217,31 @@ describe('stored format and pruning', () => {
     expect(changelog.getEntries({ isNew: true }).entries).toHaveLength(4);
   });
 
+  it('treats IDs named like built-in object properties as ordinary entries', async () => {
+    const tricky = ['toString', 'constructor', 'hasOwnProperty', '__proto__'] as const;
+    const storage = memoryStorage();
+    const changelog = createChangelog({
+      storage,
+      initialSeen: 'none',
+      entries: tricky.map((id) => ({ id, channels: ['popup', 'badge'] })),
+    });
+    for (const id of tricky) expect(changelog.getEntry(id).isNew).toBe(true);
+
+    changelog.markSeen('toString', { channel: 'popup' });
+    changelog.markSeen(['constructor', '__proto__']);
+    expect(changelog.getEntry('toString', { channel: 'popup' }).isNew).toBe(false);
+    expect(changelog.getEntry('toString', { channel: 'badge' }).isNew).toBe(true);
+    expect(changelog.getEntry('constructor').isNew).toBe(false);
+    expect(changelog.getEntry('__proto__').isNew).toBe(false);
+    expect(changelog.getEntry('hasOwnProperty').isNew).toBe(true);
+
+    // Survives a save and reload.
+    await flush();
+    const again = createChangelog({ storage, entries: tricky.map((id) => ({ id, channels: ['popup', 'badge'] })) });
+    expect(again.getEntry('__proto__').isNew).toBe(false);
+    expect(again.getEntry('hasOwnProperty').isNew).toBe(true);
+  });
+
   it('throws on duplicate ids', () => {
     expect(() =>
       createChangelog({ storage: memoryStorage(), entries: [{ id: 'a' }, { id: 'a' }] }),
